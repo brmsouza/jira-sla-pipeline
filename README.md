@@ -7,6 +7,10 @@
 
 Enterprise-grade Data Engineering solution for SLA monitoring, governance, and analytical reporting using a Python-only Medallion architecture.
 
+<p align="center">
+  <img src="docs/images/dashboard_demo.gif" width="1000">
+</p>
+
 ---
 
 # Quick Start
@@ -37,11 +41,12 @@ streamlit run src/dashboard/app.py
 8. [Governance & Observability](#-governance--observability)
 9. [Data Quality Framework](#-data-quality-framework)
 10. [Project Structure](#-project-structure)
-11. [Pipeline Execution](#-pipeline-execution)
-12. [Dashboard Capabilities](#-dashboard-capabilities)
-13. [Enterprise Controls](#-enterprise-controls)
-14. [Future Roadmap](#-future-roadmap)
-15. [Author](#-author)
+11. [Dashboard Preview](#-dashboard-preview)
+12. [Pipeline Execution](#-pipeline-execution)
+13. [Dashboard Capabilities](#-dashboard-capabilities)
+14. [Enterprise Controls](#-enterprise-controls)
+15. [Future Roadmap](#-future-roadmap)
+16. [Author](#-author)
 
 ---
 
@@ -296,6 +301,63 @@ requirements.txt
 README.md
 ```
 
+#  Dashboard Preview
+
+## Overview (Gold Resolved)
+
+<p align="center">
+  <img src="docs/images/dashboard_overview_2_v1.0.1.PNG" width="900">
+</p>
+
+---
+
+## SLA Breaches Analysis
+
+<p align="center">
+  <img src="docs/images/dashboard_slabreaches_1_v1.0.1.PNG" width="900">
+</p>
+
+<p align="center">
+  <img src="docs/images/dashboard_slabreaches_2_v1.0.1.PNG" width="900">
+</p>
+
+<p align="center">
+  <img src="docs/images/dashboard_slabreaches_3_v1.0.1.PNG" width="900">
+</p>
+
+---
+
+## Reports (Analyst & Issue Type)
+
+<p align="center">
+  <img src="docs/images/dashboard_reports_1_v1.0.1.PNG" width="900">
+</p>
+
+---
+
+## SLA Backlog Monitoring
+
+<p align="center">
+  <img src="docs/images/dashboard_backlog_1_v1.0.1.PNG" width="900">
+</p>
+
+---
+
+## Data Quality (Silver)
+
+<p align="center">
+  <img src="docs/images/dashboard_dataquality_1_v1.0.1.PNG" width="900">
+</p>
+
+---
+
+## Governance & Observability
+
+<p align="center">
+  <img src="docs/images/dashboard_governanca_1_v1.0.1.PNG" width="900">
+</p>
+
+---
 ---
 
 # Pipeline Execution
