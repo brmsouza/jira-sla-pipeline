@@ -40,3 +40,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 - Improved run reliability by making outputs deterministic and validating deliverables via the Quality Gate.
+
+
+## [1.0.1] - 2026-02-17
+### Added
+- Streamlit dark theme configuration via `.streamlit/config.toml`.
+
+### Changed
+- Dashboard charts and layout aligned to dark theme (Plotly + Streamlit).
