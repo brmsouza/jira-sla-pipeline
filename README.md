@@ -5,11 +5,12 @@
 [![Architecture](https://img.shields.io/badge/architecture-medallion-purple.svg?style=flat-square)]()
 [![Release](https://img.shields.io/github/v/release/brmsouza/jira-sla-python.svg?style=flat-square)](https://github.com/brmsouza/jira-sla-python/releases)
 
-Enterprise-grade Data Engineering solution for SLA monitoring, governance, and analytical reporting using a Python-only Medallion architecture.
-
 <p align="center">
   <img src="docs/images/dashboard_demo.gif" width="1000">
 </p>
+
+
+Enterprise-grade Data Engineering solution for SLA monitoring, governance, and analytical reporting using a Python-only Medallion architecture.
 
 ---
 
