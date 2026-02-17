@@ -1,0 +1,12 @@
+{
+  "total": 1000,
+  "valid": 804,
+  "missing": 186,
+  "invalid": 10,
+  "created_missing": 0,
+  "created_invalid": 10,
+  "resolved_missing": 186,
+  "resolved_invalid": 10,
+  "resolved_before_created": 0,
+  "issue_key_filled_from_id": 1000
+}

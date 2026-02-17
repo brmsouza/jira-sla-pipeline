@@ -1,0 +1,8 @@
+run_id,step,status,start_ts,end_ts,duration_s,rows_out,dq_total,dq_valid,dq_missing,dq_invalid,artifact,error
+ba888960-a87d-47c1-b6ef-67828e15e536,common.cleanup_environment,OK,2026-02-17T05:54:14+00:00,2026-02-17T05:54:14+00:00,0.01,,,,,,,
+ba888960-a87d-47c1-b6ef-67828e15e536,bronze.extract_issues,OK,2026-02-17T05:54:14+00:00,2026-02-17T05:54:14+00:00,0.01,,,,,,,
+ba888960-a87d-47c1-b6ef-67828e15e536,bronze.extract_holidays,OK,2026-02-17T05:54:14+00:00,2026-02-17T05:54:15+00:00,0.9,,,,,,,
+ba888960-a87d-47c1-b6ef-67828e15e536,silver.normalize_issues,OK,2026-02-17T05:54:15+00:00,2026-02-17T05:54:15+00:00,0.04,,,,,,,
+ba888960-a87d-47c1-b6ef-67828e15e536,silver.build_calendar,OK,2026-02-17T05:54:15+00:00,2026-02-17T05:54:15+00:00,0.02,,,,,,,
+ba888960-a87d-47c1-b6ef-67828e15e536,gold.build_resolved,OK,2026-02-17T05:54:15+00:00,2026-02-17T05:54:15+00:00,0.2,,,,,,,
+ba888960-a87d-47c1-b6ef-67828e15e536,gold.build_backlog,OK,2026-02-17T05:54:15+00:00,2026-02-17T05:54:16+00:00,0.76,,,,,,,
