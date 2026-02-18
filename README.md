@@ -32,22 +32,22 @@ streamlit run src/dashboard/app.py
 
 # Table of Contents
 
-1. [Executive Summary](#-executive-summary)
-2. [Business Impact](#-business-impact)
-3. [Architectural Principles](#-architectural-principles)
-4. [Medallion Architecture](#-medallion-architecture)
-5. [Architecture Diagram](#-architecture-diagram)
-6. [Data Contracts](#-data-contracts)
-7. [SLA Model Design](#-sla-model-design)
-8. [Governance & Observability](#-governance--observability)
-9. [Data Quality Framework](#-data-quality-framework)
-10. [Project Structure](#-project-structure)
-11. [Dashboard Preview](#-dashboard-preview)
-12. [Pipeline Execution](#-pipeline-execution)
-13. [Dashboard Capabilities](#-dashboard-capabilities)
-14. [Enterprise Controls](#-enterprise-controls)
-15. [Future Roadmap](#-future-roadmap)
-16. [Author](#-author)
+1. [Executive Summary](#executive-summary)
+2. [Business Impact](#business-impact)
+3. [Architectural Principles](#architectural-principles)
+4. [Medallion Architecture](#medallion-architecture)
+5. [Architecture Diagram](#architecture-diagram)
+6. [Data Contracts](#data-contracts)
+7. [SLA Model Design](#sla-model-design)
+8. [Governance & Observability](#governance--observability)
+9. [Data Quality Framework](#data-quality-framework)
+10. [Project Structure](#project-structure)
+11. [Dashboard Preview](#dashboard-preview)
+12. [Pipeline Execution](#pipeline-execution)
+13. [Dashboard Capabilities](#dashboard-capabilities)
+14. [Enterprise Controls](#enterprise-controls)
+15. [Future Roadmap](#future-roadmap)
+16. [Author](#author)
 
 ---
 
