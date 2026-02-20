@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
@@ -77,15 +78,26 @@ def _build_log_files(layer: str) -> LogFiles:
     )
 
 
+def _env_truthy(name: str, default: str = "0") -> bool:
+    """
+    Interprets an env var as boolean.
+    Truthy values: 1, true, yes, y, on (case-insensitive)
+    """
+    raw = os.getenv(name, default).strip().lower()
+    return raw in {"1", "true", "yes", "y", "on"}
+
+
 def get_logger(name: str, layer: str = "pipeline") -> logging.Logger:
     """
-    Returns a configured logger:
-      - Console output
-      - logs/<layer>/<layer>.log (INFO/WARN)
+    Returns a configured logger.
+
+    Default behavior (professional / CI-friendly):
+      - NO console output (silent terminal)
+      - logs/<layer>/<layer>.log (INFO..WARNING)
       - logs/<layer>/<layer>_errors.log (ERROR+)
 
-    This function is tolerant to layer casing:
-      "BRONZE" == "bronze"
+    Optional:
+      - Enable console output by setting: LOG_TO_CONSOLE=1
     """
     layer_norm = _normalize_layer(layer)
 
@@ -95,7 +107,8 @@ def get_logger(name: str, layer: str = "pipeline") -> logging.Logger:
     if logger.handlers:
         return logger
 
-    logger.setLevel(logging.INFO)
+    # Capture everything; handlers decide what to write.
+    logger.setLevel(logging.DEBUG)
     logger.propagate = False
 
     logs = _build_log_files(layer_norm)
@@ -106,15 +119,17 @@ def get_logger(name: str, layer: str = "pipeline") -> logging.Logger:
         datefmt="%Y-%m-%d %H:%M:%S",
     )
 
-    # Console handler
-    sh = logging.StreamHandler()
-    sh.setLevel(logging.INFO)
-    sh.setFormatter(fmt)
-    sh.addFilter(_LayerFilter(layer_label))
-    logger.addHandler(sh)
+    # Optional console handler (disabled by default)
+    if _env_truthy("LOG_TO_CONSOLE", default="0"):
+        sh = logging.StreamHandler()
+        sh.setLevel(logging.INFO)
+        sh.setFormatter(fmt)
+        sh.addFilter(_LayerFilter(layer_label))
+        logger.addHandler(sh)
 
     # File handler: info (up to WARNING)
-    fh_info = logging.FileHandler(logs.info_log, encoding="utf-8")
+    # delay=True helps on Windows by opening the file only when the first log record is emitted.
+    fh_info = logging.FileHandler(logs.info_log, encoding="utf-8", delay=True)
     fh_info.setLevel(logging.INFO)
     fh_info.setFormatter(fmt)
     fh_info.addFilter(_LayerFilter(layer_label))
@@ -122,7 +137,7 @@ def get_logger(name: str, layer: str = "pipeline") -> logging.Logger:
     logger.addHandler(fh_info)
 
     # File handler: errors (ERROR+)
-    fh_err = logging.FileHandler(logs.error_log, encoding="utf-8")
+    fh_err = logging.FileHandler(logs.error_log, encoding="utf-8", delay=True)
     fh_err.setLevel(logging.ERROR)
     fh_err.setFormatter(fmt)
     fh_err.addFilter(_LayerFilter(layer_label))
