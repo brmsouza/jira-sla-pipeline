@@ -453,6 +453,52 @@ def _options(df: pd.DataFrame, col: str) -> list[str]:
 
 
 # ================================
+# NEW: Gold reconciliation excluding invalids
+# ================================
+def _invalid_id_sets(invalid_df: pd.DataFrame) -> tuple[set[str], set[str]]:
+    """
+    Returns (invalid_issue_ids, invalid_keys) from silver_issues_invalid.csv.
+    Uses strings for robust matching (csv types may vary).
+    """
+    if invalid_df is None or invalid_df.empty:
+        return set(), set()
+
+    invalid_issue_ids: set[str] = set()
+    invalid_keys: set[str] = set()
+
+    if "issue_id" in invalid_df.columns:
+        invalid_issue_ids = set(
+            invalid_df["issue_id"].dropna().astype(str).str.strip().tolist()
+        )
+
+    if "key" in invalid_df.columns:
+        invalid_keys = set(
+            invalid_df["key"].dropna().astype(str).str.strip().tolist()
+        )
+
+    return invalid_issue_ids, invalid_keys
+
+
+def _count_gold_excluding_invalid(path: Path, invalid_issue_ids: set[str], invalid_keys: set[str]) -> int:
+    """
+    Counts rows in a gold CSV excluding any record whose issue_id or key is flagged invalid in Silver.
+    """
+    df = read_csv_or_empty(path)
+    if df.empty:
+        return 0
+
+    mask = pd.Series([True] * len(df))
+
+    if invalid_issue_ids and "issue_id" in df.columns:
+        mask &= ~df["issue_id"].astype(str).str.strip().isin(invalid_issue_ids)
+
+    if invalid_keys and "key" in df.columns:
+        mask &= ~df["key"].astype(str).str.strip().isin(invalid_keys)
+
+    return int(mask.sum())
+
+
+# ================================
 # Header
 # ================================
 top_left, top_right = st.columns([3, 1], vertical_alignment="center")
@@ -665,11 +711,20 @@ with tab_deliv:
     st.caption("Traceability of record counts across layers (ingested → validated → delivered).")
 
     bronze_cnt = count_bronze_records(BRONZE_RAW_PATH)
+
     silver_total, silver_valid, silver_missing, silver_invalid = get_silver_dq_counts()
     silver_usable = max(silver_total - silver_invalid, 0)  # valid + missing
 
-    gold_resolved_cnt = int(len(read_csv_or_empty(GOLD_RESOLVED_PATH)))
-    gold_backlog_cnt = int(len(read_csv_or_empty(GOLD_BACKLOG_PATH)))  # optional
+    # --- NEW: exclude Silver invalids from Gold counts (reconciliation-safe) ---
+    invalid_df = read_csv_or_empty(SILVER_INVALID_PATH)
+    invalid_issue_ids, invalid_keys = _invalid_id_sets(invalid_df)
+
+    gold_resolved_raw_cnt = int(len(read_csv_or_empty(GOLD_RESOLVED_PATH)))
+    gold_backlog_raw_cnt = int(len(read_csv_or_empty(GOLD_BACKLOG_PATH)))  # optional
+    gold_total_raw_cnt = gold_resolved_raw_cnt + gold_backlog_raw_cnt
+
+    gold_resolved_cnt = _count_gold_excluding_invalid(GOLD_RESOLVED_PATH, invalid_issue_ids, invalid_keys)
+    gold_backlog_cnt = _count_gold_excluding_invalid(GOLD_BACKLOG_PATH, invalid_issue_ids, invalid_keys)
     gold_total_cnt = gold_resolved_cnt + gold_backlog_cnt
 
     coverage_usable = round((gold_total_cnt / silver_usable) * 100, 2) if silver_usable else 0.0
@@ -685,7 +740,8 @@ with tab_deliv:
             f"""
 <div class="kpi-note">
 <b>Silver breakdown</b>: valid={silver_valid} • missing={silver_missing} • invalid={silver_invalid} <br/>
-<b>Gold breakdown</b>: resolved={gold_resolved_cnt} • backlog={gold_backlog_cnt} • total={gold_total_cnt} <br/>
+<b>Gold breakdown</b>: resolved={gold_resolved_cnt} • backlog={gold_backlog_cnt} • total={gold_total_cnt}
+<span class="small-muted">(raw={gold_total_raw_cnt})</span><br/>
 <b>Coverage</b> (Gold vs Silver usable): {coverage_usable:.2f}%
 </div>
 """,
