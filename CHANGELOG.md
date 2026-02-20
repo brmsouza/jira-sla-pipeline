@@ -20,6 +20,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - (Planned) Windows/OneDrive log file lock handling during cleanup (optional log rotation).
 
 ---
+## [1.2.0] - 2026-02-20
+
+### Added
+- New "Deliberes" tab in the Streamlit dashboard for deliberation analysis and visualization.
+
+### Changed
+- README updated to reflect latest dashboard structure and improvements.
+- Improved dashboard user experience by removing unnecessary terminal output during pipeline execution.
+
+### Fixed
+- Cleaned execution flow by eliminating noisy console messages.
+---
 
 ## [1.1.0] - 2026-02-17
 
