@@ -401,6 +401,7 @@ README.md
 </p>
 
 ---
+
 ## Overview (Gold Resolved)
 
 <p align="center">
@@ -408,6 +409,15 @@ README.md
 </p>
 
 ---
+
+## Reports (Analyst & Issue Type)
+
+<p align="center">
+  <img src="docs/images/dashboard_reports_1_v1.0.1.PNG" width="900">
+</p>
+
+---
+
 
 ## SLA Breaches Analysis
 
@@ -425,26 +435,17 @@ README.md
 
 ---
 
-## Reports (Analyst & Issue Type)
-
-<p align="center">
-  <img src="docs/images/dashboard_reports_1_v1.0.1.PNG" width="900">
-</p>
-
----
-
-## SLA Backlog Monitoring
-
-<p align="center">
-  <img src="docs/images/dashboard_backlog_1_v1.0.1.PNG" width="900">
-</p>
-
----
-
 ## Data Quality (Silver)
 
 <p align="center">
   <img src="docs/images/dashboard_dataquality_1_v1.0.1.PNG" width="900">
+</p>
+
+---
+## SLA Backlog Monitoring
+
+<p align="center">
+  <img src="docs/images/dashboard_backlog_1_v1.0.1.PNG" width="900">
 </p>
 
 ---
