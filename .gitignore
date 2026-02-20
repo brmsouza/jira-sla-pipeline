@@ -21,3 +21,30 @@ Thumbs.db
 data/gold/*.csv
 data/silver/*.csv
 data/bronze/*.json
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+
+# Logs
+logs/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# VSCode
+.vscode/
+
+# Data outputs
+data/gold/*.csv
+data/silver/*.csv
+data/bronze/*.json
+
+# Audit / governance outputs (generated)
+data/audit/
