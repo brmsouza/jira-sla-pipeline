@@ -458,7 +458,7 @@ def _options(df: pd.DataFrame, col: str) -> list[str]:
 top_left, top_right = st.columns([3, 1], vertical_alignment="center")
 with top_left:
     st.title("SLA Monitoring Dashboard")
-    st.caption("Professional delivery view: required CSV outputs + analysis tabs.")
+    st.caption("SLA monitoring dashboard: filterable insights powered by deterministic pipeline outputs (CSV).")
 with top_right:
     if st.button("🔄 Reload data", width="stretch"):
         st.cache_data.clear()
@@ -598,28 +598,41 @@ with tab_deliv:
     st.subheader("Required Deliverables (CSV)")
     st.caption("Assessment-required outputs + a clear reconciliation across Bronze → Silver → Gold.")
 
-    run_log = read_csv_or_empty(AUDIT_RUN_LOG_PATH)
-    last_run = get_last_run_summary(run_log) if not run_log.empty else {}
-
     topA, topB = st.columns([2, 1], vertical_alignment="top")
 
+    # ---- Pipeline last run (audit OPTIONAL, .gitignore-friendly) ----
     with topA:
         with st.container(border=True):
             st.markdown("#### Pipeline last run")
-            if not last_run:
-                st.info("`data/audit/run_log.csv` not found or empty.")
-            else:
-                status = last_run.get("status") or "N/A"
-                start_txt = _fmt_dt_utc(last_run.get("start"))
-                end_txt = _fmt_dt_utc(last_run.get("end"))
-                dur = last_run.get("duration_s")
-                dur_txt = f"{float(dur):.2f}s" if dur is not None and str(dur) != "nan" else "N/A"
 
-                c1, c2, c3 = st.columns(3)
-                c1.metric("Status", status)
-                c2.metric("Started", start_txt.replace(" UTC", ""))
-                c3.metric("Duration", dur_txt)
-                st.caption("Source: data/audit/run_log.csv")
+            if not AUDIT_RUN_LOG_PATH.exists():
+                st.info(
+                    "Audit file not found. This is expected when `data/audit/` is excluded by `.gitignore`.\n\n"
+                    "Run the pipeline locally to generate:\n"
+                    "- `data/audit/run_log.csv`\n"
+                    "- `data/audit/lineage.json`"
+                )
+            else:
+                run_log = read_csv_or_empty(AUDIT_RUN_LOG_PATH)
+                last_run = get_last_run_summary(run_log) if not run_log.empty else {}
+
+                if not last_run:
+                    st.info(
+                        "`data/audit/run_log.csv` exists but is empty.\n\n"
+                        "Run the pipeline again to populate audit events."
+                    )
+                else:
+                    status = last_run.get("status") or "N/A"
+                    start_txt = _fmt_dt_utc(last_run.get("start"))
+                    end_txt = _fmt_dt_utc(last_run.get("end"))
+                    dur = last_run.get("duration_s")
+                    dur_txt = f"{float(dur):.2f}s" if dur is not None and str(dur) != "nan" else "N/A"
+
+                    c1, c2, c3 = st.columns(3)
+                    c1.metric("Status", status)
+                    c2.metric("Started", start_txt.replace(" UTC", ""))
+                    c3.metric("Duration", dur_txt)
+                    st.caption("Source: data/audit/run_log.csv")
 
     with topB:
         with st.container(border=True):
@@ -647,7 +660,7 @@ with tab_deliv:
 
     st.divider()
 
-    # --------- Volume reconciliation (NO useless chart) ----------
+    # --------- Volume reconciliation ----------
     st.markdown("### Data Pipeline Volume (Bronze → Silver → Gold)")
     st.caption("Traceability of record counts across layers (ingested → validated → delivered).")
 
@@ -887,10 +900,12 @@ with tab_reports:
 
 
 # ================================
-# TAB 3 - Breaches
+# TAB 3 - Breaches (ALL RED)
 # ================================
 with tab_viol:
     st.subheader("SLA Breaches (Resolved only)")
+    st.caption("Breach-only KPIs + risk by analyst + longest breaches (based on current filters).")
+
     if df_gold.empty or df_view.empty:
         st.info("No Resolved data for the current filters.")
         st.stop()
@@ -902,18 +917,130 @@ with tab_viol:
 
     breached["resolution_hours"] = pd.to_numeric(breached.get("resolution_hours"), errors="coerce").fillna(0.0)
 
-    with st.container(border=True):
-        c1, c2, c3 = st.columns(3)
-        c1.metric("Breaches", total_breached)
-        c2.metric("Breach rate (%)", f"{breach_rate:.2f}%")
-        c3.metric("Resolved tickets", total_resolved)
-
     if breached.empty:
+        with st.container(border=True):
+            c1, c2, c3, c4 = st.columns(4)
+            c1.metric("Breaches", 0)
+            c2.metric("Breach rate (%)", f"{breach_rate:.2f}%")
+            c3.metric("Avg breach (h)", "0.00")
+            c4.metric("Max breach (h)", "0.00")
         st.success("No SLA breaches for the current filters ✅")
         st.stop()
 
+    analyst_totals = (
+        df_view.groupby("assignee_name")["issue_id"]
+        .count()
+        .reset_index()
+        .rename(columns={"issue_id": "total_resolved"})
+    )
+    analyst_breached = (
+        breached.groupby("assignee_name")["issue_id"]
+        .count()
+        .reset_index()
+        .rename(columns={"issue_id": "sla_breached_count"})
+    )
+
+    risk = analyst_totals.merge(analyst_breached, on="assignee_name", how="left")
+    risk["sla_breached_count"] = risk["sla_breached_count"].fillna(0).astype(int)
+    risk["breach_pct"] = (risk["sla_breached_count"] / risk["total_resolved"]) * 100
+    risk["breach_pct"] = risk["breach_pct"].fillna(0.0)
+
+    risk_sorted = risk.sort_values(
+        ["breach_pct", "sla_breached_count", "total_resolved"],
+        ascending=[False, False, False],
+    )
+    top_risk = risk_sorted.iloc[0]
+    top_risk_name = str(top_risk["assignee_name"])
+    top_risk_pct = float(top_risk["breach_pct"])
+    top_risk_breaches = int(top_risk["sla_breached_count"])
+    top_risk_total = int(top_risk["total_resolved"])
+
+    avg_breach_hours = float(breached["resolution_hours"].mean()) if len(breached) else 0.0
+    max_breach_hours = float(breached["resolution_hours"].max()) if len(breached) else 0.0
+
+    with st.container(border=True):
+        c1, c2, c3, c4, c5, c6 = st.columns(6)
+        c1.metric("Breaches", total_breached)
+        c2.metric("Breach rate (%)", f"{breach_rate:.2f}%")
+        c3.metric("Top risk analyst", top_risk_name)
+        c4.metric("Breaches / Total", f"{top_risk_breaches} / {top_risk_total}")
+        c5.metric("Avg breach (h)", f"{avg_breach_hours:.2f}")
+        c6.metric("Max breach (h)", f"{max_breach_hours:.2f}")
+
+    st.caption(f"Top risk analyst breach rate: {top_risk_pct:.2f}% (within current filters).")
+
     st.divider()
-    st.markdown("#### Breached tickets (preview)")
+
+    st.markdown("### Breach Risk by Analyst")
+
+    colA, colB = st.columns(2)
+    with colA:
+        vol = risk.sort_values("sla_breached_count", ascending=False).head(20).copy()
+        fig = px.bar(
+            vol,
+            x="assignee_name",
+            y="sla_breached_count",
+            text="sla_breached_count",
+            title="Breach Volume by Analyst (Top 20)",
+            template="plotly_white",
+            color_discrete_sequence=["#EF553B"],
+        )
+        st.plotly_chart(fig, width="stretch")
+
+    with colB:
+        pie_df = (
+            risk.sort_values("sla_breached_count", ascending=False)[["assignee_name", "sla_breached_count"]]
+            .head(10)
+            .copy()
+        )
+        others_count = (
+            int(risk.sort_values("sla_breached_count", ascending=False)["sla_breached_count"].iloc[10:].sum())
+            if len(risk) > 10
+            else 0
+        )
+        if others_count > 0:
+            pie_df = pd.concat(
+                [pie_df, pd.DataFrame([{"assignee_name": "Others", "sla_breached_count": others_count}])],
+                ignore_index=True,
+            )
+        fig = px.pie(
+            pie_df,
+            names="assignee_name",
+            values="sla_breached_count",
+            title="Breach Share by Analyst (Top 10)",
+            color_discrete_sequence=["#EF553B"],
+        )
+        st.plotly_chart(fig, width="stretch")
+
+    st.markdown("### Breach Rate by Analyst (%)")
+    rate = risk.sort_values(["breach_pct", "sla_breached_count"], ascending=[False, False]).head(20).copy()
+    rate["breach_pct_label"] = rate["breach_pct"].round(2)
+
+    fig = px.bar(
+        rate,
+        x="assignee_name",
+        y="breach_pct",
+        text="breach_pct_label",
+        title="Breach Rate (Top 20) — % of resolved that breached",
+        template="plotly_white",
+        color_discrete_sequence=["#EF553B"],
+    )
+    fig.update_yaxes(ticksuffix="%")
+    st.plotly_chart(fig, width="stretch")
+
+    st.divider()
+
+    st.download_button(
+        "⬇️ Download breaches (CSV)",
+        data=breached.to_csv(index=False).encode("utf-8"),
+        file_name="sla_breaches_breached.csv",
+        mime="text/csv",
+        width="stretch",
+    )
+
+    st.markdown("### Tickets that Breached SLA (Longest First)")
+    breached_sorted = breached.sort_values("resolution_hours", ascending=False)
+
     cols = [
         "issue_id",
         "key",
@@ -923,20 +1050,73 @@ with tab_viol:
         "assignee_name",
         "resolution_hours",
         "sla_expected_hours",
+        "sla_status",
         "created_at",
         "resolved_at",
     ]
-    show_cols = [c for c in cols if c in breached.columns]
-    breached = breached.sort_values("resolution_hours", ascending=False)
-    render_df(breached[show_cols].reset_index(drop=True), preview_rows=200)
+    show_cols = [c for c in cols if c in breached_sorted.columns]
 
-    st.download_button(
-        "⬇️ Download breaches (CSV)",
-        data=breached.to_csv(index=False).encode("utf-8"),
-        file_name="sla_breaches_breached.csv",
-        mime="text/csv",
-        width="stretch",
-    )
+    st.markdown("#### Top 30 longest breaches")
+    render_df(breached_sorted[show_cols].head(30).reset_index(drop=True), preview_rows=30)
+
+    st.divider()
+
+    st.markdown("### Longest Breaches Analysis")
+    col1, col2 = st.columns(2)
+
+    with col1:
+        label_col = "key" if "key" in breached_sorted.columns else "issue_id"
+        topN = breached_sorted.head(20).copy()
+        fig = px.bar(
+            topN,
+            x=label_col,
+            y="resolution_hours",
+            text=topN["resolution_hours"].round(2),
+            title="Top 20 longest breached tickets (resolution_hours)",
+            template="plotly_white",
+            color_discrete_sequence=["#EF553B"],
+        )
+        st.plotly_chart(fig, width="stretch")
+
+    with col2:
+        fig = px.histogram(
+            breached_sorted,
+            x="resolution_hours",
+            nbins=30,
+            title="Resolution time distribution (breached only)",
+            template="plotly_white",
+            color_discrete_sequence=["#EF553B"],
+        )
+        st.plotly_chart(fig, width="stretch")
+
+    st.divider()
+
+    st.markdown("### Avg breach resolution (hours) by analyst")
+    if "assignee_name" in breached_sorted.columns:
+        avg_by_analyst = (
+            breached_sorted.groupby("assignee_name")["resolution_hours"]
+            .mean()
+            .reset_index()
+            .rename(columns={"resolution_hours": "avg_breach_hours"})
+            .sort_values("avg_breach_hours", ascending=False)
+            .head(20)
+        )
+        fig = px.bar(
+            avg_by_analyst,
+            x="assignee_name",
+            y="avg_breach_hours",
+            text=avg_by_analyst["avg_breach_hours"].round(2),
+            title="Average breach resolution time by analyst (Top 20)",
+            template="plotly_white",
+            color_discrete_sequence=["#EF553B"],
+        )
+        st.plotly_chart(fig, width="stretch")
+    else:
+        st.info("Column 'assignee_name' not found in breached dataset.")
+
+    st.divider()
+    st.markdown("### All breached records (preview)")
+    render_df(breached_sorted[show_cols].reset_index(drop=True), preview_rows=200)
 
 
 # ================================
@@ -1054,25 +1234,34 @@ with tab_gov:
     with colA:
         with st.container(border=True):
             st.markdown("#### Run Log (audit)")
-            run_log = read_csv_or_empty(AUDIT_RUN_LOG_PATH)
-            if run_log.empty:
-                st.info("data/audit/run_log.csv not found.")
-            else:
-                render_df(run_log, preview_rows=200)
-                st.download_button(
-                    "⬇️ Download run_log.csv",
-                    data=run_log.to_csv(index=False).encode("utf-8"),
-                    file_name="run_log.csv",
-                    mime="text/csv",
-                    width="stretch",
+            if not AUDIT_RUN_LOG_PATH.exists():
+                st.info(
+                    "Audit file not found. This is expected when `data/audit/` is excluded by `.gitignore`.\n\n"
+                    "Run the pipeline locally to generate `data/audit/run_log.csv`."
                 )
+            else:
+                run_log = read_csv_or_empty(AUDIT_RUN_LOG_PATH)
+                if run_log.empty:
+                    st.info("data/audit/run_log.csv exists but is empty.")
+                else:
+                    render_df(run_log, preview_rows=200)
+                    st.download_button(
+                        "⬇️ Download run_log.csv",
+                        data=run_log.to_csv(index=False).encode("utf-8"),
+                        file_name="run_log.csv",
+                        mime="text/csv",
+                        width="stretch",
+                    )
 
     with colB:
         with st.container(border=True):
             st.markdown("#### Lineage")
             lineage = read_json_or_empty(AUDIT_LINEAGE_PATH)
             if not lineage:
-                st.info("data/audit/lineage.json not found.")
+                st.info(
+                    "data/audit/lineage.json not found. This is expected when `data/audit/` is excluded by `.gitignore`.\n\n"
+                    "Run the pipeline locally to generate `data/audit/lineage.json`."
+                )
             else:
                 st.json(lineage)
 
