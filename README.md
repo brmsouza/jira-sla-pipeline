@@ -397,7 +397,7 @@ README.md
 ## Deliverables
 
 <p align="center">
-  <img src="docs/images/dashboard_deliverables_1_v1.2.1.PNG" width="900">
+  <img src="docs/images/dashboard_deliverables_v1.2.1.png" width="900">
 </p>
 
 ---
