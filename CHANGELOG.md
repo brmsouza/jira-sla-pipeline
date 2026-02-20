@@ -20,6 +20,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - (Planned) Windows/OneDrive log file lock handling during cleanup (optional log rotation).
 
 ---
+## [1.2.1] - 2026-02-20
+
+### Fixed
+- Deliverables tab: Gold volume reconciliation now excludes records flagged as invalid in `silver_issues_invalid.csv`.
+- `Gold delivered` KPI now reflects only usable Silver records (valid + missing).
+- Coverage metric (Gold vs Silver usable) corrected to ensure Medallion consistency.
+
+### Changed
+- Volume reconciliation logic updated to filter Gold counts by:
+  - `issue_id`
+  - `key`
+- Improved breakdown transparency showing raw vs reconciled Gold totals.
+
+### Technical
+- Added helper functions:
+  - `_invalid_id_sets`
+  - `_count_gold_excluding_invalid`
+- No pipeline logic changed (dashboard-only correction).
+---
+
 ## [1.2.0] - 2026-02-20
 
 ### Added
