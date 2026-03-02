@@ -3,7 +3,7 @@
 
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg?style=flat-square)]()
 [![Architecture](https://img.shields.io/badge/architecture-medallion-purple.svg?style=flat-square)]()
-[![Release](https://img.shields.io/github/v/release/brmsouza/jira-sla-python.svg?style=flat-square)](https://github.com/brmsouza/jira-sla-python/releases)
+[![Release](https://img.shields.io/github/v/release/brmsouza/jira-sla-pipeline.svg?style=flat-square)](https://github.com/brmsouza/jira-sla-pipeline/releases)
 
 <p align="center">
   <img src="docs/images/dashboard_demo.gif" width="1000">
